@@ -29,8 +29,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install Android SDK platforms
-        run: |
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Install npm dependencies
         run: npm ci
@@ -42,15 +41,17 @@ jobs:
         run: chmod +x android/gradlew
 
       - name: Build Debug APK
-        run: |
-          cd android
-          ./gradlew assembleDebug --no-daemon --info 2>&1 | tail -60
+        run: cd android && ./gradlew assembleDebug --no-daemon
 
-      - name: Rename and stage APK
+      - name: Find and upload APK
         run: |
+          echo "=== Searching for APK ==="
+          find android -name "*.apk" 2>/dev/null
+          APK=$(find android -name "*.apk" | head -1)
+          echo "Found: $APK"
           mkdir -p output
-          cp android/app/build/outputs/apk/debug/app-debug.apk output/FitCoach.apk
-          echo "APK size: $(du -h output/FitCoach.apk)"
+          cp "$APK" output/FitCoach.apk
+          echo "Size: $(du -h output/FitCoach.apk)"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -61,6 +62,5 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## ✅ FitCoach APK generada" >> $GITHUB_STEP_SUMMARY
-          echo "Descarga la APK desde la sección **Artifacts** de este workflow." >> $GITHUB_STEP_SUMMARY
-          ls -lh output/FitCoach.apk
+          echo "## ✅ FitCoach APK lista para instalar" >> $GITHUB_STEP_SUMMARY
+          echo "📱 Descarga la APK desde **Artifacts** abajo." >> $GITHUB_STEP_SUMMARY
