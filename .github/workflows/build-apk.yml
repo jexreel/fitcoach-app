@@ -41,39 +41,22 @@ jobs:
         run: chmod +x android/gradlew
 
       - name: Build Debug APK
-        id: build
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee ../build-log.txt
-          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Upload build log (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build-log.txt
-          retention-days: 7
-
-      - name: Find and stage APK
-        if: always()
+      - name: Search for APK output
         run: |
-          echo "=== APK search ==="
-          find android -name "*.apk" 2>/dev/null || echo "No APKs found"
-          APK=$(find android -name "*.apk" 2>/dev/null | head -1)
-          if [ -n "$APK" ]; then
-            mkdir -p output
-            cp "$APK" output/FitCoach.apk
-            echo "✅ APK found: $APK ($(du -h output/FitCoach.apk | cut -f1))"
-          else
-            echo "❌ No APK produced"
-          fi
+          echo "=== All APK files ==="
+          find . -name "*.apk" 2>/dev/null
+          echo "=== android/app/build/outputs ==="
+          ls -la android/app/build/outputs/ 2>/dev/null || echo "outputs dir not found"
+          ls -la android/app/build/outputs/apk/ 2>/dev/null || echo "apk dir not found"
+          ls -la android/app/build/outputs/apk/debug/ 2>/dev/null || echo "debug dir not found"
 
-      - name: Upload APK artifact
-        if: always()
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FitCoach-APK
-          path: output/FitCoach.apk
+          path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
-          if-no-files-found: warn
