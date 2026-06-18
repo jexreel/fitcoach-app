@@ -28,14 +28,14 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android build tools
+      - name: Install Android SDK platforms
         run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Install npm dependencies
         run: npm ci
 
-      - name: Sync Capacitor
+      - name: Sync Capacitor web assets
         run: npx cap sync android
 
       - name: Make gradlew executable
@@ -44,21 +44,23 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --info 2>&1 | tail -60
 
-      - name: Rename APK
+      - name: Rename and stage APK
         run: |
           mkdir -p output
           cp android/app/build/outputs/apk/debug/app-debug.apk output/FitCoach.apk
+          echo "APK size: $(du -h output/FitCoach.apk)"
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: FitCoach-APK
           path: output/FitCoach.apk
           retention-days: 30
 
-      - name: Done
+      - name: Summary
         run: |
-          echo "✅ APK lista"
+          echo "## ✅ FitCoach APK generada" >> $GITHUB_STEP_SUMMARY
+          echo "Descarga la APK desde la sección **Artifacts** de este workflow." >> $GITHUB_STEP_SUMMARY
           ls -lh output/FitCoach.apk
