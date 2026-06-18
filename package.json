@@ -1,0 +1,21 @@
+{
+  "name": "fitcoach-app",
+  "version": "1.0.0",
+  "description": "FitCoach - App de ejercicio personalizada",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Web assets ready in www/'",
+    "android:add": "npx cap add android",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:build-debug": "cd android && ./gradlew assembleDebug",
+    "android:build-release": "cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}
