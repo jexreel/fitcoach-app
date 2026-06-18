@@ -41,26 +41,39 @@ jobs:
         run: chmod +x android/gradlew
 
       - name: Build Debug APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
-
-      - name: Find and upload APK
+        id: build
         run: |
-          echo "=== Searching for APK ==="
-          find android -name "*.apk" 2>/dev/null
-          APK=$(find android -name "*.apk" | head -1)
-          echo "Found: $APK"
-          mkdir -p output
-          cp "$APK" output/FitCoach.apk
-          echo "Size: $(du -h output/FitCoach.apk)"
+          cd android
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee ../build-log.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: Upload build log (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build-log.txt
+          retention-days: 7
+
+      - name: Find and stage APK
+        if: always()
+        run: |
+          echo "=== APK search ==="
+          find android -name "*.apk" 2>/dev/null || echo "No APKs found"
+          APK=$(find android -name "*.apk" 2>/dev/null | head -1)
+          if [ -n "$APK" ]; then
+            mkdir -p output
+            cp "$APK" output/FitCoach.apk
+            echo "✅ APK found: $APK ($(du -h output/FitCoach.apk | cut -f1))"
+          else
+            echo "❌ No APK produced"
+          fi
 
       - name: Upload APK artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: FitCoach-APK
           path: output/FitCoach.apk
           retention-days: 30
-
-      - name: Summary
-        run: |
-          echo "## ✅ FitCoach APK lista para instalar" >> $GITHUB_STEP_SUMMARY
-          echo "📱 Descarga la APK desde **Artifacts** abajo." >> $GITHUB_STEP_SUMMARY
+          if-no-files-found: warn
