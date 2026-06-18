@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitCoach">
+<meta name="description" content="Tu entrenador personal con programas personalizados por peso, talla y meta">
+<title>FitCoach — Entrena con propósito</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root {
+    --c1: #7c3aed;
+    --c1-light: #ede9fe;
+    --c1-dark: #4c1d95;
+    --c2: #10b981;
+    --c2-light: #d1fae5;
+    --c3: #f59e0b;
+    --c3-light: #fef3c7;
+    --danger: #ef4444;
+    --bg: #0f172a;
+    --bg2: #1e293b;
+    --bg3: #334155;
+    --card: #1e293b;
+    --card2: #273549;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --border: rgba(255,255,255,0.08);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif; }
+
+  /* ── SCREENS ─────────────────────────────────── */
+  .screen { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; transform: translateY(12px); }
+  .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+  /* ── ONBOARDING ──────────────────────────────── */
+  #screen-onboarding { background: linear-gradient(160deg, #0f172a 60%, #1e0f3c); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.5rem; gap: 2rem; }
+  .logo-hero { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .logo-icon { width: 80px; height: 80px; background: var(--c1); border-radius: 24px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 44px; height: 44px; fill: white; }
+  .logo-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-sub { font-size: 1rem; color: var(--text2); text-align: center; line-height: 1.5; }
+
+  .onboard-form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 1rem; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .field-input { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 16px; color: var(--text); outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+  .field-input:focus { border-color: var(--c1); }
+  .field-input option { background: var(--bg2); }
+  .inline-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── BUTTONS ─────────────────────────────────── */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px 24px; border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.15s, opacity 0.15s; width: 100%; }
+  .btn:active { transform: scale(0.97); opacity: 0.9; }
+  .btn-primary { background: var(--c1); color: white; }
+  .btn-secondary { background: var(--bg3); color: var(--text); }
+  .btn-success { background: var(--c2); color: white; }
+  .btn-sm { padding: 10px 18px; font-size: 14px; border-radius: 8px; width: auto; }
+
+  /* ── NAV BAR ─────────────────────────────────── */
+  #navbar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg2); border-top: 1px solid var(--border); display: flex; padding: 8px 0 calc(8px + var(--safe-bottom)); z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; cursor: pointer; transition: color 0.2s; color: var(--text3); }
+  .nav-item.active { color: var(--c1); }
+  .nav-item svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .nav-item span { font-size: 10px; font-weight: 600; }
+
+  /* ── HEADER ──────────────────────────────────── */
+  .page-header { padding: 56px 20px 16px; background: linear-gradient(180deg, var(--bg2) 0%, transparent 100%); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .page-header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.3px; }
+  .page-header p { font-size: 14px; color: var(--text2); margin-top: 2px; }
+
+  /* ── HOME SCREEN ─────────────────────────────── */
+  #screen-home { padding-bottom: calc(80px + var(--safe-bottom)); }
+  .home-hero { margin: 56px 20px 20px; padding: 24px; background: linear-gradient(135deg, var(--c1-dark), var(--c1)); border-radius: var(--radius); position: relative; overflow: hidden; }
+  .home-hero::before { content: ''; position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+  .home-hero h2 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .home-hero p { font-size: 14px; opacity: 0.85; line-height: 1.4; }
+  .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .hero-stat { background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px 8px; text-align: center; }
+  .hero-stat .val { font-size: 18px; font-weight: 800; }
+  .hero-stat .lbl { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+
+  .section { padding: 0 20px; margin-bottom: 24px; }
+  .section-title { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+
+  /* ── DAY CARD ────────────────────────────────── */
+  .day-card { background: var(--card); border-radius: var(--radius); padding: 16px; display: flex; gap: 14px; align-items: flex-start; margin-bottom: 10px; border: 1.5px solid var(--border); cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .day-card:active { background: var(--card2); }
+  .day-card.completed { border-color: var(--c2); }
+  .day-card.today { border-color: var(--c1); }
+  .day-num { width: 48px; height: 48px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg3); flex-shrink: 0; }
+  .day-num .dn { font-size: 20px; font-weight: 800; line-height: 1; }
+  .day-num .dl { font-size: 9px; font-weight: 600; color: var(--text2); text-transform: uppercase; }
+  .day-card.today .day-num { background: var(--c1); }
+  .day-card.completed .day-num { background: var(--c2); }
+  .day-info { flex: 1; }
+  .day-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .day-desc { font-size: 13px; color: var(--text2); line-height: 1.4; margin-bottom: 8px; }
+  .day-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { background: var(--bg3); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: var(--text2); }
+  .tag.c1 { background: rgba(124,58,237,0.2); color: #a78bfa; }
+  .tag.c2 { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+  .tag.c3 { background: rgba(245,158,11,0.2); color: #fcd34d; }
+  .day-chevron { color: var(--text3); align-self: center; }
+
+  /* ── PROGRESS RINGS ──────────────────────────── */
+  .progress-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .progress-card { background: var(--card); border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); }
+  .ring-wrap { flex-shrink: 0; }
+  .ring-info .ri-val { font-size: 20px; font-weight: 800; }
+  .ring-info .ri-lbl { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+  /* ── WORKOUT DETAIL ──────────────────────────── */
+  #screen-workout { padding-bottom: 120px; }
+  .workout-header { position: relative; }
+  .workout-hero-img { width: 100%; height: 220px; object-fit: cover; }
+  .workout-header-back { position: absolute; top: 48px; left: 16px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); }
+  .workout-header-back svg { width: 20px; height: 20px; stroke: white; fill: none; stroke-width: 2.5; }
+  .workout-meta { padding: 20px 20px 0; }
+  .workout-day-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(124,58,237,0.2); color: #a78bfa; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+  .workout-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px; }
+  .workout-subtitle { font-size: 14px; color: var(--text2); line-height: 1.5; margin-bottom: 16px; }
+  .workout-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .ws { background: var(--bg2); border-radius: 10px; padding: 12px 10px; text-align: center; }
+  .ws .wv { font-size: 18px; font-weight: 800; }
+  .ws .wl { font-size: 11px; color: var(--text2); }
+
+  .exercise-section { padding: 0 20px; margin-bottom: 20px; }
+  .ex-section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .ex-section-title span { font-size: 12px; font-weight: 500; color: var(--text2); }
+
+  /* ── EXERCISE CARD ───────────────────────────── */
+  .exercise-card { background: var(--card); border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); margin-bottom: 10px; }
+  .ex-anim-wrap { position: relative; width: 100%; height: 160px; background: var(--bg3); overflow: hidden; cursor: pointer; }
+  .ex-anim-svg { width: 100%; height: 100%; }
+  .ex-play-btn { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .ex-play-inner { background: rgba(124,58,237,0.85); width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.2); transition: transform 0.2s; }
+  .ex-play-inner:active { transform: scale(0.92); }
+  .ex-play-inner svg { width: 22px; height: 22px; fill: white; margin-left: 3px; }
+  .ex-info { padding: 14px 14px 16px; }
+  .ex-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .ex-desc { font-size: 13px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+  .ex-metrics { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ex-metric { background: var(--bg3); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text2); display: flex; align-items: center; gap: 5px; }
+  .ex-metric svg { width: 12px; height: 12px; }
+  .ex-steps { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .ex-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 13px; color: var(--text2); line-height: 1.4; }
+  .ex-step-num { background: var(--bg3); color: var(--c1); min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── TIMER ───────────────────────────────────── */
+  .timer-bar { position: fixed; bottom: calc(64px + var(--safe-bottom)); left: 0; right: 0; background: var(--c1); padding: 14px 20px; display: flex; align-items: center; gap: 16px; z-index: 50; transform: translateY(100px); transition: transform 0.3s; box-shadow: 0 -4px 20px rgba(124,58,237,0.4); }
+  .timer-bar.visible { transform: translateY(0); }
+  .timer-text { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; flex: 1; }
+  .timer-label { font-size: 12px; opacity: 0.8; }
+  .timer-controls { display: flex; gap: 10px; }
+  .timer-btn { background: rgba(255,255,255,0.2); border: none; border-radius: 8px; padding: 8px 14px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* ── PROFILE SCREEN ──────────────────────────── */
+  #screen-profile { padding-bottom: calc(80px + var(--safe-bottom)); }
+  .profile-hero { margin: 56px 20px 20px; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); border-radius: var(--radius); padding: 24px; display: flex; align-items: center; gap: 16px; }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--c1); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; flex-shrink: 0; }
+  .profile-name { font-size: 20px; font-weight: 800; }
+  .profile-goal { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .stat-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; margin-bottom: 20px; }
+  .stat-card { background: var(--card); border-radius: var(--radius-sm); padding: 16px; border: 1px solid var(--border); }
+  .stat-card .sv { font-size: 22px; font-weight: 800; }
+  .stat-card .sl { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .stat-card .si { font-size: 20px; margin-bottom: 6px; }
+  .menu-list { padding: 0 20px; }
+  .menu-item { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-icon { width: 38px; height: 38px; background: var(--bg2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .menu-text { flex: 1; }
+  .menu-text .mt { font-size: 15px; font-weight: 600; }
+  .menu-text .ms { font-size: 12px; color: var(--text2); }
+  .menu-arrow { color: var(--text3); }
+
+  /* ── PROGRESS SCREEN ─────────────────────────── */
+  #screen-progress { padding-bottom: calc(80px + var(--safe-bottom)); }
+  .week-chart { padding: 0 20px; margin-bottom: 24px; }
+  .week-bars { display: flex; gap: 8px; align-items: flex-end; height: 100px; margin-top: 12px; }
+  .week-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .week-bar { width: 100%; border-radius: 6px 6px 0 0; background: var(--bg3); transition: height 0.5s ease, background 0.3s; }
+  .week-bar.done { background: var(--c1); }
+  .week-bar.today { background: var(--c2); }
+  .week-day { font-size: 11px; font-weight: 600; color: var(--text3); }
+  .achievement-grid { padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .achievement { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; opacity: 0.4; transition: opacity 0.3s, border-color 0.3s; }
+  .achievement.unlocked { opacity: 1; border-color: var(--c3); }
+  .ach-icon { font-size: 28px; margin-bottom: 6px; }
+  .ach-name { font-size: 12px; font-weight: 700; }
+  .ach-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ── ANIMATED EXERCISES ──────────────────────── */
+  .ex-figure { animation: none; }
+  .running-anim { animation: run-cycle 0.6s steps(1) infinite; }
+  @keyframes run-cycle { 0% { opacity: 1; } 50% { opacity: 0.01; } 50.1% { opacity: 1; } }
+
+  /* ── MISC ────────────────────────────────────── */
+  .done-badge { background: rgba(16,185,129,0.2); color: #6ee7b7; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text2); }
+  .empty-state svg { width: 48px; height: 48px; opacity: 0.3; margin-bottom: 12px; }
+
+  /* ── LOADING ─────────────────────────────────── */
+  #loading { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; z-index: 1000; transition: opacity 0.4s; }
+  #loading .spinner { width: 48px; height: 48px; border: 3px solid var(--bg3); border-top-color: var(--c1); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── MODAL ───────────────────────────────────── */
+  #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: none; align-items: flex-end; backdrop-filter: blur(4px); }
+  #modal-overlay.open { display: flex; }
+  .modal-sheet { background: var(--bg2); border-radius: 24px 24px 0 0; padding: 24px 24px calc(24px + var(--safe-bottom)); width: 100%; max-height: 80vh; overflow-y: auto; }
+  .modal-handle { width: 40px; height: 4px; background: var(--bg3); border-radius: 2px; margin: 0 auto 20px; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div style="width:64px;height:64px;background:var(--c1);border-radius:20px;display:flex;align-items:center;justify-content:center">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg>
+  </div>
+  <div class="spinner"></div>
+  <p style="color:var(--text2);font-size:14px">Cargando tu programa...</p>
+</div>
+
+<!-- ONBOARDING -->
+<div id="screen-onboarding" class="screen active">
+  <div class="logo-hero">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg>
+    </div>
+    <div>
+      <div class="logo-title">FitCoach</div>
+      <div class="logo-sub">Tu programa de ejercicio<br>personalizado cada día</div>
+    </div>
+  </div>
+
+  <div class="onboard-form">
+    <div class="field-group">
+      <div class="field-label">Tu nombre</div>
+      <input class="field-input" type="text" id="ob-name" placeholder="¿Cómo te llamas?" autocomplete="off">
+    </div>
+    <div class="inline-fields">
+      <div class="field-group">
+        <div class="field-label">Peso (kg)</div>
+        <input class="field-input" type="number" id="ob-weight" placeholder="70" min="30" max="200">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Talla (cm)</div>
+        <input class="field-input" type="number" id="ob-height" placeholder="170" min="100" max="220">
+      </div>
+    </div>
+    <div class="inline-fields">
+      <div class="field-group">
+        <div class="field-label">Edad</div>
+        <input class="field-input" type="number" id="ob-age" placeholder="25" min="10" max="90">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Sexo</div>
+        <select class="field-input" id="ob-gender">
+          <option value="M">Masculino</option>
+          <option value="F">Femenino</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Nivel de actividad</div>
+      <select class="field-input" id="ob-level">
+        <option value="beginner">🌱 Principiante (sedentario)</option>
+        <option value="intermediate">⚡ Intermedio (activo 2-3x/semana)</option>
+        <option value="advanced">🔥 Avanzado (activo 5+x/semana)</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Tu meta principal</div>
+      <select class="field-input" id="ob-goal">
+        <option value="lose_weight">🔥 Perder peso y grasa</option>
+        <option value="build_muscle">💪 Ganar músculo y fuerza</option>
+        <option value="tone_up">✨ Tonificar y definir</option>
+        <option value="endurance">🏃 Mejorar resistencia</option>
+        <option value="flexibility">🧘 Flexibilidad y movilidad</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="startApp()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      Crear mi programa
+    </button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="screen-home" class="screen">
+  <div class="home-hero" id="home-hero">
+    <h2 id="hero-greeting">¡Hola!</h2>
+    <p id="hero-message">Hoy es un gran día para entrenar</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="val" id="hs-days">0</div><div class="lbl">Días activos</div></div>
+      <div class="hero-stat"><div class="val" id="hs-streak">0</div><div class="lbl">Racha 🔥</div></div>
+      <div class="hero-stat"><div class="val" id="hs-pct">0%</div><div class="lbl">Semana</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Programa semanal</div>
+    <div id="week-days-list"></div>
+  </div>
+</div>
+
+<!-- WORKOUT DETAIL -->
+<div id="screen-workout" class="screen">
+  <div class="workout-header">
+    <div id="workout-anim-banner" style="width:100%;height:220px;background:var(--bg3);position:relative;overflow:hidden">
+      <canvas id="banner-canvas" width="375" height="220" style="width:100%;height:100%"></canvas>
+    </div>
+    <button class="workout-header-back" onclick="goBack()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+  </div>
+  <div class="workout-meta">
+    <div class="workout-day-badge" id="wd-badge">Día 1</div>
+    <div class="workout-title" id="wd-title">Título</div>
+    <div class="workout-subtitle" id="wd-subtitle">Descripción</div>
+    <div class="workout-stats-row">
+      <div class="ws"><div class="wv" id="ws-dur">30</div><div class="wl">minutos</div></div>
+      <div class="ws"><div class="wv" id="ws-cal">200</div><div class="wl">calorías</div></div>
+      <div class="ws"><div class="wv" id="ws-exs">6</div><div class="wl">ejercicios</div></div>
+    </div>
+  </div>
+  <div id="exercises-list"></div>
+  <div style="padding:0 20px;margin-top:8px">
+    <button class="btn btn-success" onclick="completeWorkout()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+      Marcar como completado
+    </button>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div id="screen-progress" class="screen">
+  <div class="page-header">
+    <h1>Mi progreso</h1>
+    <p>Semana actual · <span id="prog-week-label">Semana 1</span></p>
+  </div>
+  <div class="week-chart section">
+    <div class="section-title">Entrenamientos esta semana</div>
+    <div class="week-bars" id="week-bars"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Logros</div>
+    <div class="achievement-grid" id="achievements"></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="screen-profile" class="screen">
+  <div class="profile-hero">
+    <div class="avatar" id="profile-avatar">?</div>
+    <div>
+      <div class="profile-name" id="profile-name">Tu nombre</div>
+      <div class="profile-goal" id="profile-goal-text">Meta: —</div>
+    </div>
+  </div>
+  <div class="stat-cards">
+    <div class="stat-card"><div class="si">⚖️</div><div class="sv" id="pc-weight">—</div><div class="sl">Peso actual</div></div>
+    <div class="stat-card"><div class="si">📏</div><div class="sv" id="pc-height">—</div><div class="sl">Talla</div></div>
+    <div class="stat-card"><div class="si">🔥</div><div class="sv" id="pc-bmi">—</div><div class="sl">IMC</div></div>
+    <div class="stat-card"><div class="si">⚡</div><div class="sv" id="pc-level">—</div><div class="sl">Nivel</div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Mi plan</div>
+  </div>
+  <div class="menu-list">
+    <div class="menu-item" onclick="showGoalInfo()">
+      <div class="menu-icon">🎯</div>
+      <div class="menu-text"><div class="mt">Mi meta</div><div class="ms" id="menu-goal-sub">Cargando...</div></div>
+      <div class="menu-arrow">›</div>
+    </div>
+    <div class="menu-item" onclick="showNutritionTip()">
+      <div class="menu-icon">🥗</div>
+      <div class="menu-text"><div class="mt">Consejo nutricional</div><div class="ms">Basado en tu objetivo</div></div>
+      <div class="menu-arrow">›</div>
+    </div>
+    <div class="menu-item" onclick="resetApp()">
+      <div class="menu-icon">🔄</div>
+      <div class="menu-text"><div class="mt">Editar perfil</div><div class="ms">Cambiar datos y objetivo</div></div>
+      <div class="menu-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV BAR -->
+<nav id="navbar">
+  <div class="nav-item active" data-screen="home" onclick="switchTab('home')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    <span>Inicio</span>
+  </div>
+  <div class="nav-item" data-screen="progress" onclick="switchTab('progress')">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Progreso</span>
+  </div>
+  <div class="nav-item" data-screen="profile" onclick="switchTab('profile')">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Perfil</span>
+  </div>
+</nav>
+
+<!-- TIMER BAR -->
+<div class="timer-bar" id="timer-bar">
+  <div>
+    <div class="timer-label" id="timer-label-text">Descanso</div>
+    <div class="timer-text" id="timer-display">01:00</div>
+  </div>
+  <div class="timer-controls">
+    <button class="timer-btn" onclick="toggleTimer()">⏸ Pausa</button>
+    <button class="timer-btn" onclick="stopTimer()">✕</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModal()">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+
+const GOALS = {
+  lose_weight: { label: 'Perder peso y grasa', emoji: '🔥', desc: 'Programa cardio + fuerza para máxima quema calórica', nutrition: 'Déficit calórico leve (300-500 kcal). Prioriza proteína (1.8-2g/kg). Limita carbohidratos simples y azúcares.' },
+  build_muscle: { label: 'Ganar músculo', emoji: '💪', desc: 'Programa de hipertrofia con progresión de carga', nutrition: 'Superávit calórico moderado (200-300 kcal). Alta proteína (2-2.2g/kg). Carbohidratos complejos pre-entreno.' },
+  tone_up: { label: 'Tonificar y definir', emoji: '✨', desc: 'Circuitos de fuerza-resistencia para definición muscular', nutrition: 'Calorías de mantenimiento. Proteína moderada-alta (1.6-2g/kg). Grasas saludables (aguacate, frutos secos).' },
+  endurance: { label: 'Resistencia', emoji: '🏃', desc: 'Entrenamiento aeróbico progresivo para stamina', nutrition: 'Énfasis en carbohidratos complejos (55-60%). Hidratación óptima. Reposición de electrolitos.' },
+  flexibility: { label: 'Flexibilidad', emoji: '🧘', desc: 'Movilidad, yoga y elongación profunda', nutrition: 'Dieta anti-inflamatoria. Omega-3 (pescado, chía). Cúrcuma y jengibre para recuperación muscular.' }
+};
+
+const LEVELS = { beginner: 'Principiante', intermediate: 'Intermedio', advanced: 'Avanzado' };
+
+function generateWeekPlan(goal, level, weight, height) {
+  const bmi = weight / Math.pow(height / 100, 2);
+  const plans = {
+    lose_weight: [
+      { name: 'Cardio HIIT + Core', focus: 'Quema grasa total', duration: 35, calories: Math.round(weight * 5.5), tags: ['HIIT', 'Cardio', 'Core'],
+        exercises: [
+          { name: 'Jumping Jacks', sets: 3, reps: '30 seg', rest: 15, muscle: 'Full body', anim: 'jumping_jacks',
+            desc: 'Posición inicial: pies juntos, brazos al costado. Salta abriendo piernas al ancho de hombros mientras subes los brazos sobre la cabeza.',
+            steps: ['Párate derecho con pies juntos y brazos abajo.','Salta separando los pies y elevando los brazos en arco.','Regresa saltando a la posición inicial en un movimiento fluido.','Mantén el core contraído durante todo el ejercicio.'] },
+          { name: 'Burpees modificados', sets: 3, reps: '10 reps', rest: 30, muscle: 'Full body', anim: 'burpee',
+            desc: 'Variante de bajo impacto del burpee clásico. Ideal para quemar calorías sin sobrecargar las rodillas.',
+            steps: ['De pie, lleva las manos al suelo doblando rodillas.','Camina los pies hacia atrás a posición de plancha.','Realiza una plancha de 1 segundo.','Regresa los pies al frente y levántate.'] },
+          { name: 'Mountain Climbers', sets: 3, reps: '20 rep c/lado', rest: 20, muscle: 'Core + cardio', anim: 'mountain_climber',
+            desc: 'En posición de plancha alta, alterna llevando las rodillas al pecho con movimiento rápido y controlado.',
+            steps: ['Posición de plancha alta, manos debajo de hombros.','Lleva rodilla derecha hacia el pecho rápidamente.','Alterna con rodilla izquierda sin bajar las caderas.','Mantén la espalda plana y el core activo.'] },
+          { name: 'Sentadillas básicas', sets: 4, reps: '15 reps', rest: 45, muscle: 'Piernas + Glúteos', anim: 'squat',
+            desc: 'El ejercicio rey para piernas. Activa cuádriceps, isquiotibiales, glúteos y core de forma simultánea.',
+            steps: ['Pies al ancho de hombros, puntas ligeramente hacia afuera.','Empuja caderas hacia atrás y baja como si te sentaras.','Baja hasta que los muslos estén paralelos al suelo.','Sube empujando con los talones, apretando glúteos arriba.'] },
+          { name: 'Plancha abdominal', sets: 3, reps: '30-45 seg', rest: 30, muscle: 'Core completo', anim: 'plank',
+            desc: 'Uno de los mejores ejercicios de core. Fortalece abdomen, espalda baja y estabilizadores profundos.',
+            steps: ['Apóyate en antebrazos y puntas de pies.','Forma una línea recta de cabeza a talones.','Contrae abdomen sin contener la respiración.','Mira hacia abajo para mantener el cuello neutral.'] },
+          { name: 'Saltos en cajón / step', sets: 3, reps: '12 reps', rest: 45, muscle: 'Piernas explosivas', anim: 'box_jump',
+            desc: 'Ejercicio pliométrico para potencia de piernas. Usa un escalón, silla resistente o cualquier superficie estable.',
+            steps: ['Párate frente al step a ~30cm de distancia.','Flexiona rodillas y salta aterrizando suavemente sobre el step.','Amortiza el impacto doblando rodillas al aterrizar.','Baja con control y repite. ¡No golpees el step!'] }
+        ]
+      },
+      { name: 'Fuerza Tren Superior', focus: 'Definición brazos y pecho', duration: 40, calories: Math.round(weight * 4.2), tags: ['Fuerza', 'Superior', 'Brazos'],
+        exercises: [
+          { name: 'Flexiones de brazos', sets: 4, reps: level==='beginner'?'8-10 reps':'12-15 reps', rest: 45, muscle: 'Pecho + Tríceps', anim: 'pushup',
+            desc: 'El clásico incondicional. Trabaja pecho, hombros, tríceps y core. Modifica con rodillas apoyadas si es necesario.',
+            steps: ['Manos al ancho de hombros, cuerpo recto en plancha.','Baja el pecho hacia el suelo doblando los codos.','Mantén los codos a 45° del cuerpo (no abiertos).','Sube extendiendo los brazos sin llegar al bloqueo total.'] },
+          { name: 'Pike Push-ups', sets: 3, reps: '10 reps', rest: 45, muscle: 'Hombros', anim: 'pike_pushup',
+            desc: 'Variante del push-up que pone énfasis en los deltoides. Posición de "V invertida" con caderas elevadas.',
+            steps: ['Posición de V invertida: manos y pies en suelo, caderas arriba.','Dobla codos llevando la cabeza hacia el suelo.','Mantén las piernas relativamente rectas.','Sube extendiendo brazos. Siente el trabajo en los hombros.'] },
+          { name: 'Tríceps en silla', sets: 3, reps: '12 reps', rest: 40, muscle: 'Tríceps', anim: 'tricep_dip',
+            desc: 'Excelente para la parte posterior del brazo. Solo necesitas una silla o banca firme.',
+            steps: ['Siéntate en el borde de una silla con manos a los costados.','Desliza el cuerpo hacia adelante y baja doblando los codos.','Baja hasta que los codos estén a 90°.','Sube empujando con los tríceps.'] },
+          { name: 'Remo con mochila', sets: 3, reps: '12 rep c/brazo', rest: 45, muscle: 'Espalda + Bíceps', anim: 'row',
+            desc: 'Usa una mochila con libros u objeto pesado. Trabaja dorsales, romboides y bíceps de forma efectiva.',
+            steps: ['Apoya la rodilla y mano del mismo lado en una superficie.','Cuelga la mochila del brazo libre, espalda plana.','Tira del codo hacia arriba y atrás, apretando la espalda.','Baja con control y repite.'] }
+        ]
+      },
+      { name: 'Descanso Activo', focus: 'Recuperación y movilidad', duration: 20, calories: Math.round(weight * 1.8), tags: ['Descanso', 'Movilidad', 'Yoga'],
+        exercises: [
+          { name: 'Yoga Saludo al Sol', sets: 1, reps: '5 ciclos', rest: 0, muscle: 'Full body', anim: 'yoga',
+            desc: 'Secuencia de posturas enlazadas que mejoran flexibilidad, fuerza y concentración. Perfecta para recuperación activa.',
+            steps: ['Postura de montaña: pies juntos, palmas juntas al pecho.','Inhala y estira los brazos hacia arriba.','Exhala y dobla hacia adelante tocando los pies.','Inhala, levanta medio torso con espalda plana.','Exhala, lleva los pies atrás a plancha y baja.'] },
+          { name: 'Estiramiento de cadera', sets: 2, reps: '45 seg c/lado', rest: 0, muscle: 'Caderas + Glúteos', anim: 'hip_stretch',
+            desc: 'Estiramiento profundo del flexor de cadera. Esencial después de días de sentadillas o cardio intenso.',
+            steps: ['Hincado con una rodilla en el suelo (postura del caballero).','Empuja la cadera hacia adelante suavemente.','Mantén el torso erguido y respira profundo.','Siente el estiramiento en la parte delantera de la cadera trasera.'] }
+        ]
+      },
+      { name: 'HIIT Piernas y Glúteos', focus: 'Tonificación inferior', duration: 38, calories: Math.round(weight * 5.2), tags: ['HIIT', 'Glúteos', 'Piernas'],
+        exercises: [
+          { name: 'Sentadilla sumo', sets: 4, reps: '15 reps', rest: 40, muscle: 'Glúteos + Aductores', anim: 'sumo_squat',
+            desc: 'Pies más abiertos que en la sentadilla normal, puntas hacia afuera. Activa más glúteos medios y aductores.',
+            steps: ['Pies al doble del ancho de hombros, puntas a 45°.','Baja manteniendo el torso erguido y las rodillas alineadas.','Aprieta los glúteos en la subida.','Puedes sujetar un libro pesado para añadir carga.'] },
+          { name: 'Zancadas alternadas', sets: 3, reps: '12 rep c/pierna', rest: 45, muscle: 'Cuádriceps + Glúteos', anim: 'lunge',
+            desc: 'Ejercicio fundamental para piernas. Mejora el equilibrio y trabaja cada pierna de forma independiente.',
+            steps: ['De pie, da un paso largo hacia adelante.','Baja la rodilla trasera hacia el suelo sin tocarlo.','Rodilla delantera no debe pasar la punta del pie.','Sube y alterna con la otra pierna.'] },
+          { name: 'Puente de glúteos', sets: 4, reps: '20 reps', rest: 30, muscle: 'Glúteos + Core', anim: 'glute_bridge',
+            desc: 'Aislamiento perfecto para los glúteos. También fortalece el core y la espalda baja.',
+            steps: ['Acuéstate boca arriba, rodillas dobladas, pies planos en el suelo.','Sube las caderas apretando glúteos fuerte arriba.','Mantén 1 segundo arriba apretando.','Baja con control sin tocar el suelo completamente.'] },
+          { name: 'Sentadilla con salto', sets: 3, reps: '10 reps', rest: 60, muscle: 'Piernas explosivas', anim: 'jump_squat',
+            desc: 'Versión pliométrica de la sentadilla. Máxima activación muscular y quema calórica elevada.',
+            steps: ['Sentadilla estándar hasta muslos paralelos al suelo.','Explota hacia arriba saltando con los brazos proyectados.','Aterriza suavemente con rodillas flexionadas.','Amortigua bien el impacto y continúa la siguiente repetición.'] }
+        ]
+      },
+      { name: 'Cardio Moderado + Core', focus: 'Resistencia cardiovascular', duration: 30, calories: Math.round(weight * 4.0), tags: ['Cardio', 'Core', 'Resistencia'],
+        exercises: [
+          { name: 'Trote en el lugar', sets: 1, reps: '5 minutos', rest: 60, muscle: 'Cardio', anim: 'run',
+            desc: 'Calentamiento y cardio suave. Mantén un ritmo que te permita hablar pero te cueste un poco.',
+            steps: ['Trota en el lugar con rodillas levantadas a 90°.','Mantén los brazos activos balanceándolos hacia adelante.','Aterriza sobre el metatarso (bola del pie), no el talón.','Mantén la espalda recta y la mirada al frente.'] },
+          { name: 'Abdominales bicicleta', sets: 3, reps: '20 rep c/lado', rest: 30, muscle: 'Abdomen oblicuos', anim: 'bicycle_crunch',
+            desc: 'El ejercicio más efectivo para los oblicuos según estudios del ACE. También activa el recto abdominal.',
+            steps: ['Acuéstate, manos detrás de la cabeza sin jalar el cuello.','Lleva codo derecho hacia rodilla izquierda.','Extiende la pierna derecha al mismo tiempo.','Alterna de forma controlada y continua.'] },
+          { name: 'Plancha lateral', sets: 3, reps: '25 seg c/lado', rest: 30, muscle: 'Core lateral', anim: 'side_plank',
+            desc: 'Fortalece los oblicuos y el cuadrado lumbar. Mejora la estabilidad lateral de la columna.',
+            steps: ['Apóyate en un antebrazo, cuerpo lateral recto.','Eleva las caderas hasta formar una línea diagonal.','Mantén el cuello neutro mirando al frente.','Siente el trabajo en el costado del abdomen.'] }
+        ]
+      },
+      { name: 'Full Body Circuito', focus: 'Entrenamiento completo', duration: 45, calories: Math.round(weight * 5.8), tags: ['Full Body', 'Circuito', 'Intenso'],
+        exercises: [
+          { name: 'Sentadillas', sets: 3, reps: '15 reps', rest: 30, muscle: 'Piernas', anim: 'squat',
+            desc: 'El rey de los ejercicios. Activa más del 70% de la masa muscular total del cuerpo.',
+            steps: ['Pies al ancho de hombros, core activo.','Baja como si fuera a sentarse, rodillas sobre pies.','Muslos paralelos al suelo en el punto más bajo.','Sube empujando con los talones.'] },
+          { name: 'Flexiones de brazos', sets: 3, reps: '10 reps', rest: 30, muscle: 'Pecho y brazos', anim: 'pushup',
+            desc: 'Compuesto superior para pecho, tríceps y hombros anteriores.',
+            steps: ['Plancha alta con manos bajo hombros.','Baja el pecho controlando el movimiento.','Codos a 45° del torso.','Sube extendiendo los brazos completamente.'] },
+          { name: 'Jumping Jacks', sets: 3, reps: '30 seg', rest: 20, muscle: 'Cardio', anim: 'jumping_jacks',
+            desc: 'Ejercicio de cardio de alta intensidad para mantener el ritmo cardíaco elevado en el circuito.',
+            steps: ['Pies juntos, brazos al costado.','Salta abriendo piernas y subiendo brazos.','Mantén un ritmo constante y energético.','Respira de forma rítmica.'] },
+          { name: 'Zancadas', sets: 3, reps: '10 rep c/pierna', rest: 30, muscle: 'Piernas y glúteos', anim: 'lunge',
+            desc: 'Completa el circuito inferior con énfasis en glúteos y equilibrio.',
+            steps: ['Paso largo al frente.','Baja la rodilla trasera hacia el suelo.','Rodilla delantera alineada con el tobillo.','Empuja con el talón delantero para subir.'] }
+        ]
+      },
+      { name: 'Descanso Total', focus: 'Recuperación muscular completa', duration: 0, calories: 0, tags: ['Descanso', 'Recuperación'], rest: true,
+        exercises: []
+      }
+    ]
+  };
+
+  // Adapt by level
+  const basePlan = plans.lose_weight;
+  if (goal !== 'lose_weight') {
+    return adaptPlan(basePlan, goal, level, weight, height);
+  }
+  return basePlan;
+}
+
+function adaptPlan(basePlan, goal, level, weight, height) {
+  return basePlan.map((day, i) => {
+    let d = { ...day };
+    if (goal === 'build_muscle') {
+      d.name = ['Fuerza Tren Superior', 'Fuerza Tren Inferior', 'Descanso Activo', 'Fuerza Full Body', 'Hombros y Core', 'Fuerza + HIIT', 'Descanso'][i] || d.name;
+      d.focus = 'Hipertrofia y fuerza';
+      d.tags = ['Fuerza', 'Hipertrofia'];
+    } else if (goal === 'tone_up') {
+      d.name = ['Tonificación General', 'Circuito de Fuerza', 'Yoga + Movilidad', 'Tonificación Inferior', 'Core + Glúteos', 'Circuito Full Body', 'Descanso'][i] || d.name;
+      d.focus = 'Definición y tono';
+      d.tags = ['Tono', 'Definición'];
+    } else if (goal === 'endurance') {
+      d.name = ['Cardio Largo', 'Intervalos', 'Descanso Activo', 'Cardio HIIT', 'Fuerza Resistencia', 'Carrera Larga', 'Descanso'][i] || d.name;
+      d.focus = 'Resistencia cardiovascular';
+      d.tags = ['Cardio', 'Resistencia'];
+    } else if (goal === 'flexibility') {
+      d.name = ['Yoga Flujo', 'Movilidad Articular', 'Estiramiento Profundo', 'Pilates Core', 'Yoga Restaurativo', 'Movilidad + Fuerza', 'Meditación'][i] || d.name;
+      d.focus = 'Flexibilidad y movilidad';
+      d.tags = ['Yoga', 'Movilidad'];
+    }
+    return d;
+  });
+}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let state = {
+  user: null,
+  plan: null,
+  completedDays: {},
+  currentDay: null,
+  currentScreen: 'onboarding',
+  timerInterval: null,
+  timerSeconds: 0,
+  timerRunning: false,
+  bannerAnim: null,
+  exerciseAnims: {}
+};
+
+function loadState() {
+  const s = localStorage.getItem('fitcoach_state');
+  if (s) {
+    try {
+      const saved = JSON.parse(s);
+      state.user = saved.user;
+      state.plan = saved.plan;
+      state.completedDays = saved.completedDays || {};
+      return true;
+    } catch(e) { return false; }
+  }
+  return false;
+}
+
+function saveState() {
+  localStorage.setItem('fitcoach_state', JSON.stringify({
+    user: state.user,
+    plan: state.plan,
+    completedDays: state.completedDays
+  }));
+}
+
+// ═══════════════════════════════════════════
+// EXERCISE ANIMATIONS (Canvas)
+// ═══════════════════════════════════════════
+const ANIM_COLORS = { skin: '#f5a27a', hair: '#4a3728', shirt: '#7c3aed', pants: '#1e293b', shoe: '#374151', accent: '#a78bfa' };
+
+const ExerciseDrawers = {
+  squat: (ctx, t) => {
+    const phase = Math.sin(t * 0.08);
+    const bendY = 40 + phase * 22;
+    const kneeY = 90 + phase * 18;
+    drawStickFigure(ctx, { x: 90, headY: 30, torsoH: bendY - 30, legBend: phase > 0 ? 0.5 + phase * 0.5 : 0.5, armAngle: 0.3, color: ANIM_COLORS });
+    drawProgressBar(ctx, t, '#7c3aed', 'Sentadilla');
+  },
+  pushup: (ctx, t) => {
+    const phase = Math.abs(Math.sin(t * 0.07));
+    drawPushuFigure(ctx, phase);
+    drawProgressBar(ctx, t, '#7c3aed', 'Push-up');
+  },
+  jumping_jacks: (ctx, t) => {
+    const phase = Math.sin(t * 0.15);
+    drawJumpingJacks(ctx, phase);
+    drawProgressBar(ctx, t, '#10b981', 'Jumping Jacks');
+  },
+  run: (ctx, t) => {
+    drawRunning(ctx, t);
+    drawProgressBar(ctx, t, '#f59e0b', 'Cardio');
+  },
+  plank: (ctx, t) => {
+    drawPlank(ctx, t);
+    drawProgressBar(ctx, t, '#7c3aed', 'Plancha');
+  },
+  lunge: (ctx, t) => {
+    const phase = Math.floor(t / 40) % 2;
+    drawLunge(ctx, t, phase);
+    drawProgressBar(ctx, t, '#10b981', 'Zancada');
+  },
+  glute_bridge: (ctx, t) => {
+    const phase = Math.abs(Math.sin(t * 0.06));
+    drawGluteBridge(ctx, phase);
+    drawProgressBar(ctx, t, '#f59e0b', 'Puente de glúteos');
+  },
+  mountain_climber: (ctx, t) => {
+    drawMountainClimber(ctx, t);
+    drawProgressBar(ctx, t, '#ef4444', 'Mountain Climber');
+  },
+  burpee: (ctx, t) => {
+    const phase = Math.floor((t * 0.04) % 4);
+    drawBurpee(ctx, t, phase);
+    drawProgressBar(ctx, t, '#ef4444', 'Burpee');
+  },
+  yoga: (ctx, t) => {
+    drawYoga(ctx, t);
+    drawProgressBar(ctx, t, '#10b981', 'Yoga');
+  },
+  default: (ctx, t) => {
+    drawDefaultExercise(ctx, t);
+  }
+};
+
+// Stick figure helpers
+function drawStickFigure(ctx, opts) {
+  const { x, headY, torsoH, legBend, armAngle, color } = opts;
+  const cx = x || 90;
+
+  // Shadow
+  ctx.beginPath();
+  ctx.ellipse(cx, 158, 22, 5, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fill();
+
+  // Legs
+  const kneeX = cx + Math.sin(legBend * Math.PI) * 14;
+  const kneeY = headY + torsoH + 36;
+  const footY = headY + torsoH + 68;
+
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  // left leg
+  ctx.beginPath();
+  ctx.moveTo(cx, headY + torsoH + 8);
+  ctx.lineTo(cx - kneeX * 0.3, kneeY - 10);
+  ctx.lineTo(cx - 12, footY);
+  ctx.stroke();
+  // right leg
+  ctx.beginPath();
+  ctx.moveTo(cx, headY + torsoH + 8);
+  ctx.lineTo(cx + kneeX * 0.3, kneeY - 10);
+  ctx.lineTo(cx + 12, footY);
+  ctx.stroke();
+
+  // Pants fill
+  ctx.fillStyle = color.pants;
+  ctx.beginPath();
+  ctx.moveTo(cx - 10, headY + torsoH + 8);
+  ctx.lineTo(cx - 15, headY + torsoH + 30);
+  ctx.lineTo(cx - 5, headY + torsoH + 30);
+  ctx.lineTo(cx, headY + torsoH + 12);
+  ctx.lineTo(cx + 5, headY + torsoH + 30);
+  ctx.lineTo(cx + 15, headY + torsoH + 30);
+  ctx.lineTo(cx + 10, headY + torsoH + 8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Shirt / torso
+  ctx.fillStyle = color.shirt;
+  ctx.beginPath();
+  ctx.roundRect(cx - 14, headY + 16, 28, torsoH - 8, 4);
+  ctx.fill();
+
+  // Arms
+  ctx.strokeStyle = color.skin;
+  ctx.lineWidth = 5;
+  const armY = headY + 26;
+  ctx.beginPath();
+  ctx.moveTo(cx - 12, armY);
+  ctx.lineTo(cx - 26, armY + 22 + Math.sin(armAngle) * 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 12, armY);
+  ctx.lineTo(cx + 26, armY + 22 + Math.sin(armAngle) * 10);
+  ctx.stroke();
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(cx, headY + 8, 12, 0, Math.PI * 2);
+  ctx.fillStyle = color.skin;
+  ctx.fill();
+  ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Hair
+  ctx.fillStyle = color.hair;
+  ctx.beginPath();
+  ctx.arc(cx, headY + 4, 12, Math.PI, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawPushuFigure(ctx, phase) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const baseY = h * 0.72;
+  const liftY = phase * 28;
+
+  ctx.fillStyle = '#1e293b';
+  // Body
+  ctx.fillRect(w*0.22, baseY - 14 - liftY, w*0.56, 13);
+  // Arms
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fillRect(w*0.22 - 4, baseY - liftY, 10, 14 + liftY);
+  ctx.fillRect(w*0.78 - 4, baseY - liftY, 10, 14 + liftY);
+  // Head
+  ctx.beginPath();
+  ctx.arc(w*0.76, baseY - 20 - liftY, 13, 0, Math.PI*2);
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fill();
+  ctx.fillStyle = ANIM_COLORS.hair;
+  ctx.beginPath();
+  ctx.arc(w*0.76, baseY - 24 - liftY, 13, Math.PI, Math.PI*2);
+  ctx.fill();
+  // Shirt overlay
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.fillRect(w*0.24, baseY - 12 - liftY, w*0.50, 9);
+  // Legs
+  ctx.fillStyle = ANIM_COLORS.pants;
+  ctx.fillRect(w*0.22, baseY - 1, w*0.32, 10);
+  ctx.fillStyle = '#374151';
+  ctx.fillRect(w*0.2, baseY + 8, 14, 8);
+  ctx.fillRect(w*0.29, baseY + 8, 14, 8);
+
+  drawProgressBar(ctx, phase * 100, '#7c3aed', 'Push-up');
+}
+
+function drawJumpingJacks(ctx, phase) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const cx = w / 2;
+  const bodyY = h * 0.25;
+  const armSpread = phase * 50;
+  const legSpread = Math.abs(phase) * 30;
+  const jumpH = Math.max(0, phase) * 12;
+
+  // Shadow
+  ctx.beginPath();
+  ctx.ellipse(cx, h*0.88, 18 + legSpread*0.4, 5, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fill();
+
+  // Legs
+  ctx.strokeStyle = ANIM_COLORS.pants;
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyY + 55 - jumpH);
+  ctx.lineTo(cx - legSpread, h*0.85 - jumpH);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyY + 55 - jumpH);
+  ctx.lineTo(cx + legSpread, h*0.85 - jumpH);
+  ctx.stroke();
+
+  // Arms
+  ctx.strokeStyle = ANIM_COLORS.skin;
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(cx - 14, bodyY + 20 - jumpH);
+  ctx.lineTo(cx - 40 - armSpread * 0.4, bodyY - armSpread * 0.6 - jumpH);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 14, bodyY + 20 - jumpH);
+  ctx.lineTo(cx + 40 + armSpread * 0.4, bodyY - armSpread * 0.6 - jumpH);
+  ctx.stroke();
+
+  // Body
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.fillRect(cx - 14, bodyY + 14 - jumpH, 28, 36);
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(cx, bodyY + 8 - jumpH, 13, 0, Math.PI*2);
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fill();
+  ctx.fillStyle = ANIM_COLORS.hair;
+  ctx.beginPath();
+  ctx.arc(cx, bodyY + 4 - jumpH, 13, Math.PI, Math.PI*2);
+  ctx.fill();
+}
+
+function drawRunning(ctx, t) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const cx = w / 2;
+  const cy = h * 0.35;
+  const phase = (t * 0.1) % (Math.PI * 2);
+
+  const legF = Math.sin(phase) * 32;
+  const armF = Math.sin(phase + Math.PI) * 25;
+  const bodyBob = Math.abs(Math.sin(phase * 2)) * 6;
+
+  // Shadow
+  ctx.beginPath();
+  ctx.ellipse(cx, h*0.86, 15, 4, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fill();
+
+  // Legs
+  ctx.strokeStyle = ANIM_COLORS.pants;
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  // back leg
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 48 - bodyBob);
+  ctx.lineTo(cx - legF * 0.5, cy + 75 - bodyBob);
+  ctx.lineTo(cx - legF, h * 0.82);
+  ctx.stroke();
+  // front leg
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 48 - bodyBob);
+  ctx.lineTo(cx + legF * 0.5, cy + 75 - bodyBob);
+  ctx.lineTo(cx + legF, h * 0.82);
+  ctx.stroke();
+
+  // Arms
+  ctx.strokeStyle = ANIM_COLORS.skin;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(cx - 12, cy + 18 - bodyBob);
+  ctx.lineTo(cx - 12 - armF, cy + 42 - bodyBob);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 12, cy + 18 - bodyBob);
+  ctx.lineTo(cx + 12 + armF, cy + 42 - bodyBob);
+  ctx.stroke();
+
+  // Body
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.fillRect(cx - 13, cy + 12 - bodyBob, 26, 36);
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(cx, cy + 7 - bodyBob, 13, 0, Math.PI*2);
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fill();
+  ctx.fillStyle = ANIM_COLORS.hair;
+  ctx.beginPath();
+  ctx.arc(cx, cy + 3 - bodyBob, 13, Math.PI, Math.PI*2);
+  ctx.fill();
+}
+
+function drawPlank(ctx, t) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const pulse = Math.sin(t * 0.05) * 3;
+
+  const y = h * 0.62 + pulse;
+
+  // Ground line
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, h*0.78);
+  ctx.lineTo(w, h*0.78);
+  ctx.stroke();
+
+  // Forearms
+  ctx.strokeStyle = ANIM_COLORS.skin;
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(w*0.28, h*0.78);
+  ctx.lineTo(w*0.28, y + 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(w*0.72, h*0.78);
+  ctx.lineTo(w*0.72, y + 10);
+  ctx.stroke();
+
+  // Body
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.fillRect(w*0.3, y, w*0.4, 12);
+
+  // Legs
+  ctx.fillStyle = ANIM_COLORS.pants;
+  ctx.fillRect(w*0.18, y + 3, w*0.12, 9);
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(w*0.74, y - 2, 13, 0, Math.PI*2);
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fill();
+  ctx.fillStyle = ANIM_COLORS.hair;
+  ctx.beginPath();
+  ctx.arc(w*0.74, y - 6, 13, Math.PI, Math.PI*2);
+  ctx.fill();
+
+  // Core glow
+  ctx.fillStyle = 'rgba(124,58,237,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(w/2, y + 6, 36, 8, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  drawProgressBar(ctx, t, '#7c3aed', 'Plancha');
+}
+
+function drawLunge(ctx, t, phase) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const cx = w / 2;
+  const bob = Math.abs(Math.sin(t * 0.04)) * 8;
+  const side = phase === 0 ? -1 : 1;
+
+  const frontFootX = cx + side * 35;
+  const backFootX = cx - side * 35;
+  const kneeY = h * 0.72 - bob;
+  const hipY = h * 0.48 - bob;
+  const headY = h * 0.25 - bob;
+
+  // Shadow
+  ctx.beginPath();
+  ctx.ellipse(cx, h*0.87, 40, 5, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fill();
+
+  // Back leg
+  ctx.strokeStyle = ANIM_COLORS.pants;
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, hipY + 12);
+  ctx.lineTo(backFootX + side*5, kneeY);
+  ctx.lineTo(backFootX, h*0.84);
+  ctx.stroke();
+
+  // Front leg
+  ctx.beginPath();
+  ctx.moveTo(cx, hipY + 12);
+  ctx.lineTo(frontFootX - side*5, kneeY - 8);
+  ctx.lineTo(frontFootX, h*0.84);
+  ctx.stroke();
+
+  // Body
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.beginPath();
+  ctx.roundRect(cx - 14, hipY - 24, 28, 36, 4);
+  ctx.fill();
+
+  // Arms
+  ctx.strokeStyle = ANIM_COLORS.skin;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(cx - 12, hipY - 12);
+  ctx.lineTo(cx - 28, hipY + 12);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 12, hipY - 12);
+  ctx.lineTo(cx + 28, hipY + 12);
+  ctx.stroke();
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(cx, headY + 8, 13, 0, Math.PI*2);
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fill();
+  ctx.fillStyle = ANIM_COLORS.hair;
+  ctx.beginPath();
+  ctx.arc(cx, headY + 4, 13, Math.PI, Math.PI*2);
+  ctx.fill();
+
+  drawProgressBar(ctx, t, '#10b981', 'Zancada');
+}
+
+function drawGluteBridge(ctx, phase) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const hipH = 30 + phase * 35;
+  const baseY = h * 0.76;
+
+  // Ground
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, baseY + 20);
+  ctx.lineTo(w, baseY + 20);
+  ctx.stroke();
+
+  // Feet
+  ctx.fillStyle = '#374151';
+  ctx.fillRect(w*0.33, baseY + 10, 18, 10);
+  ctx.fillRect(w*0.58, baseY + 10, 18, 10);
+
+  // Legs
+  ctx.strokeStyle = ANIM_COLORS.pants;
+  ctx.lineWidth = 9;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(w*0.42, baseY + 10);
+  ctx.lineTo(w*0.42, baseY + 8);
+  ctx.lineTo(w/2, baseY - hipH + 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(w*0.67, baseY + 10);
+  ctx.lineTo(w*0.67, baseY + 8);
+  ctx.lineTo(w/2, baseY - hipH + 4);
+  ctx.stroke();
+
+  // Hips glow
+  if (phase > 0.5) {
+    ctx.fillStyle = 'rgba(245,158,11,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(w/2, baseY - hipH + 8, 28, 12, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Torso
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.fillRect(w*0.33, baseY - hipH + 4, w*0.34, 14);
+
+  // Upper torso / shoulders
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.fillRect(w*0.3, baseY - 24, w*0.4, 24);
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(w*0.78, baseY - 18, 12, 0, Math.PI*2);
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fill();
+
+  // Arrow showing movement
+  if (phase > 0.3) {
+    ctx.fillStyle = 'rgba(245,158,11,0.6)';
+    ctx.beginPath();
+    ctx.moveTo(w/2 - 8, baseY - hipH - 20);
+    ctx.lineTo(w/2 + 8, baseY - hipH - 20);
+    ctx.lineTo(w/2, baseY - hipH - 36);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  drawProgressBar(ctx, phase * 100, '#f59e0b', 'Puente glúteos');
+}
+
+function drawMountainClimber(ctx, t) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const phase = (t * 0.12) % (Math.PI * 2);
+  const knee = Math.sin(phase);
+  const y = h * 0.55;
+
+  // Body (horizontal)
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.fillRect(w*0.22, y - 6, w*0.52, 12);
+
+  // Arms
+  ctx.strokeStyle = ANIM_COLORS.skin;
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(w*0.72, y);
+  ctx.lineTo(w*0.72, h*0.78);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(w*0.82, y);
+  ctx.lineTo(w*0.82, h*0.78);
+  ctx.stroke();
+
+  // Moving legs
+  const leg1X = w*0.22 + knee * 28;
+  const leg2X = w*0.22 - knee * 28;
+  ctx.strokeStyle = ANIM_COLORS.pants;
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(w*0.22, y + 6);
+  ctx.lineTo(leg1X, h*0.78);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(w*0.22, y + 6);
+  ctx.lineTo(leg2X + w*0.08, h*0.78);
+  ctx.stroke();
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(w*0.78, y - 16, 12, 0, Math.PI*2);
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fill();
+  ctx.fillStyle = ANIM_COLORS.hair;
+  ctx.beginPath();
+  ctx.arc(w*0.78, y - 20, 12, Math.PI, Math.PI*2);
+  ctx.fill();
+
+  drawProgressBar(ctx, t * 0.3, '#ef4444', 'Mountain Climber');
+}
+
+function drawBurpee(ctx, t, phase) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const label = ['Abajo', 'Plancha', 'Sube', 'Salto'][phase];
+  drawRunning(ctx, t * (phase + 1) * 20);
+  drawProgressBar(ctx, t, '#ef4444', `Burpee · ${label}`);
+}
+
+function drawYoga(ctx, t) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const cx = w / 2;
+  const float = Math.sin(t * 0.03) * 4;
+  const cy = h * 0.55 + float;
+
+  // Glow effect
+  const grad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 60);
+  grad.addColorStop(0, 'rgba(167,139,250,0.3)');
+  grad.addColorStop(1, 'rgba(167,139,250,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 60, 0, Math.PI*2);
+  ctx.fill();
+
+  // Crossed legs
+  ctx.strokeStyle = ANIM_COLORS.pants;
+  ctx.lineWidth = 9;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - 8, cy + 10);
+  ctx.lineTo(cx - 38, cy + 36);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 8, cy + 10);
+  ctx.lineTo(cx + 38, cy + 36);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx - 38, cy + 36);
+  ctx.lineTo(cx + 30, cy + 36);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 38, cy + 36);
+  ctx.lineTo(cx - 30, cy + 36);
+  ctx.stroke();
+
+  // Arms raised
+  const armFloat = Math.sin(t * 0.04) * 6;
+  ctx.strokeStyle = ANIM_COLORS.skin;
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(cx - 14, cy - 10);
+  ctx.lineTo(cx - 36, cy - 45 - armFloat);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 14, cy - 10);
+  ctx.lineTo(cx + 36, cy - 45 - armFloat);
+  ctx.stroke();
+
+  // Body
+  ctx.fillStyle = ANIM_COLORS.shirt;
+  ctx.beginPath();
+  ctx.roundRect(cx - 14, cy - 28, 28, 40, 5);
+  ctx.fill();
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(cx, cy - 40, 14, 0, Math.PI*2);
+  ctx.fillStyle = ANIM_COLORS.skin;
+  ctx.fill();
+  ctx.fillStyle = ANIM_COLORS.hair;
+  ctx.beginPath();
+  ctx.arc(cx, cy - 44, 14, Math.PI, Math.PI*2);
+  ctx.fill();
+
+  // Peace symbol
+  ctx.strokeStyle = 'rgba(167,139,250,0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy - 70 - armFloat, 8, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 62 - armFloat);
+  ctx.lineTo(cx, cy - 78 - armFloat);
+  ctx.moveTo(cx, cy - 70 - armFloat);
+  ctx.lineTo(cx - 7, cy - 65 - armFloat);
+  ctx.moveTo(cx, cy - 70 - armFloat);
+  ctx.lineTo(cx + 7, cy - 65 - armFloat);
+  ctx.stroke();
+
+  drawProgressBar(ctx, t, '#a78bfa', 'Yoga · Meditación');
+}
+
+function drawDefaultExercise(ctx, t) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const bob = Math.sin(t * 0.08) * 8;
+
+  drawStickFigure(ctx, {
+    x: w / 2,
+    headY: h * 0.2 + bob,
+    torsoH: 50,
+    legBend: 0,
+    armAngle: t * 0.05,
+    color: ANIM_COLORS
+  });
+  drawProgressBar(ctx, t, '#7c3aed', 'Ejercicio');
+}
+
+function drawProgressBar(ctx, t, color, label) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const progress = (Math.sin(t * 0.02) + 1) / 2;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(20, h - 32, w - 40, 8);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(20, h - 32, (w - 40) * progress, 8, 4);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(label, 20, h - 40);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.textAlign = 'right';
+  ctx.fillText(Math.round(progress * 100) + '%', w - 20, h - 40);
+}
+
+// ═══════════════════════════════════════════
+// CANVAS ANIMATION ENGINE
+// ═══════════════════════════════════════════
+function startCanvasAnim(canvas, animKey, bgColor) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  let t = 0;
+  let raf;
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, '#0f172a');
+    bg.addColorStop(1, '#1e293b');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid lines subtle
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+
+    const drawer = ExerciseDrawers[animKey] || ExerciseDrawers.default;
+    drawer(ctx, t);
+
+    t++;
+    raf = requestAnimationFrame(draw);
+  }
+
+  draw();
+  return () => cancelAnimationFrame(raf);
+}
+
+// ═══════════════════════════════════════════
+// APP LOGIC
+// ═══════════════════════════════════════════
+function startApp() {
+  const name = document.getElementById('ob-name').value.trim();
+  const weight = parseFloat(document.getElementById('ob-weight').value);
+  const height = parseFloat(document.getElementById('ob-height').value);
+  const age = parseInt(document.getElementById('ob-age').value);
+  const gender = document.getElementById('ob-gender').value;
+  const level = document.getElementById('ob-level').value;
+  const goal = document.getElementById('ob-goal').value;
+
+  if (!name || !weight || !height || !age) {
+    alert('Por favor completa todos los campos para personalizar tu programa.');
+    return;
+  }
+
+  state.user = { name, weight, height, age, gender, level, goal };
+  state.plan = generateWeekPlan(goal, level, weight, height);
+  state.completedDays = {};
+  saveState();
+  initMainApp();
+}
+
+function initMainApp() {
+  document.getElementById('navbar').style.display = 'flex';
+  updateHomeScreen();
+  updateProfileScreen();
+  updateProgressScreen();
+  switchTab('home');
+  document.getElementById('loading').style.opacity = '0';
+  setTimeout(() => document.getElementById('loading').style.display = 'none', 400);
+}
+
+function updateHomeScreen() {
+  const u = state.user;
+  const days = Object.keys(state.completedDays).length;
+  const streak = calcStreak();
+  const weekDone = state.plan ? state.plan.filter((d, i) => state.completedDays[i]).length : 0;
+  const weekPct = state.plan ? Math.round(weekDone / state.plan.length * 100) : 0;
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? `¡Buenos días, ${u.name}! ☀️` : hour < 18 ? `¡Buenas tardes, ${u.name}! ⚡` : `¡Buenas noches, ${u.name}! 🌙`;
+
+  document.getElementById('hero-greeting').textContent = greeting;
+  document.getElementById('hero-message').textContent = GOALS[u.goal]?.desc || 'Hoy es un gran día para entrenar';
+  document.getElementById('hs-days').textContent = days;
+  document.getElementById('hs-streak').textContent = streak;
+  document.getElementById('hs-pct').textContent = weekPct + '%';
+
+  const list = document.getElementById('week-days-list');
+  list.innerHTML = '';
+  const today = new Date().getDay();
+  const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+  state.plan.forEach((day, i) => {
+    const isToday = i === (today === 0 ? 6 : today - 1);
+    const isDone = state.completedDays[i];
+
+    const card = document.createElement('div');
+    card.className = `day-card${isToday ? ' today' : ''}${isDone ? ' completed' : ''}`;
+    card.onclick = () => openWorkout(i);
+
+    const tagHTML = day.tags.slice(0, 2).map((t, ti) => `<span class="tag c${ti+1}">${t}</span>`).join('');
+    const doneHTML = isDone ? '<span class="done-badge">✓ Completado</span>' : '';
+
+    card.innerHTML = `
+      <div class="day-num">
+        <div class="dn">${i + 1}</div>
+        <div class="dl">${dayNames[i]}</div>
+      </div>
+      <div class="day-info">
+        <div class="day-name">${day.rest ? '😴 ' : ''}${day.name}</div>
+        <div class="day-desc">${day.focus}${day.duration ? ` · ${day.duration} min` : ''}</div>
+        <div class="day-tags">${tagHTML}${doneHTML}</div>
+      </div>
+      ${!day.rest ? '<div class="day-chevron">›</div>' : ''}
+    `;
+    list.appendChild(card);
+  });
+}
+
+function openWorkout(dayIndex) {
+  const day = state.plan[dayIndex];
+  if (day.rest) return;
+
+  state.currentDay = dayIndex;
+
+  document.getElementById('wd-badge').textContent = `Día ${dayIndex + 1} · ${day.tags[0] || ''}`;
+  document.getElementById('wd-title').textContent = day.name;
+  document.getElementById('wd-subtitle').textContent = day.focus;
+  document.getElementById('ws-dur').textContent = day.duration || '—';
+  document.getElementById('ws-cal').textContent = day.calories || '—';
+  document.getElementById('ws-exs').textContent = day.exercises?.length || 0;
+
+  // Banner animation
+  const canvas = document.getElementById('banner-canvas');
+  if (state.bannerAnim) { state.bannerAnim(); state.bannerAnim = null; }
+  const firstExAnim = day.exercises?.[0]?.anim || 'default';
+  state.bannerAnim = startCanvasAnim(canvas, firstExAnim, '#1e293b');
+
+  // Exercises
+  const list = document.getElementById('exercises-list');
+  list.innerHTML = '';
+  day.exercises?.forEach((ex, ei) => {
+    const sec = document.createElement('div');
+    sec.className = 'exercise-section';
+
+    const stepsHTML = ex.steps?.map((s, si) =>
+      `<div class="ex-step"><div class="ex-step-num">${si+1}</div><div>${s}</div></div>`
+    ).join('') || '';
+
+    sec.innerHTML = `
+      <div class="exercise-card">
+        <div class="ex-anim-wrap" id="ex-wrap-${ei}" onclick="toggleExAnim(${ei}, '${ex.anim || 'default'}')">
+          <canvas id="ex-canvas-${ei}" width="375" height="160" style="width:100%;height:100%"></canvas>
+          <div class="ex-play-btn" id="ex-play-${ei}">
+            <div class="ex-play-inner">
+              <svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-desc">${ex.desc}</div>
+          <div class="ex-metrics">
+            <span class="ex-metric">🔢 ${ex.sets} series</span>
+            <span class="ex-metric">↩ ${ex.reps}</span>
+            <span class="ex-metric">⏱ ${ex.rest}s descanso</span>
+            <span class="ex-metric">💪 ${ex.muscle}</span>
+          </div>
+          <div class="ex-steps">${stepsHTML}</div>
+          <div style="margin-top:12px">
+            <button class="btn btn-secondary btn-sm" onclick="startRestTimer(${ex.rest},'${ex.name}')">
+              ⏱ Iniciar descanso ${ex.rest}s
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    list.appendChild(sec);
+  });
+
+  switchTab('workout');
+}
+
+const exAnimStates = {};
+function toggleExAnim(ei, animKey) {
+  const canvas = document.getElementById(`ex-canvas-${ei}`);
+  const playBtn = document.getElementById(`ex-play-${ei}`);
+
+  if (exAnimStates[ei]) {
+    exAnimStates[ei]();
+    delete exAnimStates[ei];
+    playBtn.style.display = 'flex';
+  } else {
+    playBtn.style.display = 'none';
+    exAnimStates[ei] = startCanvasAnim(canvas, animKey, '#1e293b');
+  }
+}
+
+function completeWorkout() {
+  if (state.currentDay === null) return;
+  state.completedDays[state.currentDay] = Date.now();
+  saveState();
+
+  // Stop anims
+  if (state.bannerAnim) { state.bannerAnim(); state.bannerAnim = null; }
+  Object.keys(exAnimStates).forEach(k => { exAnimStates[k](); delete exAnimStates[k]; });
+
+  showModal(`
+    <div style="text-align:center;padding:16px 0">
+      <div style="font-size:64px;margin-bottom:16px">🏆</div>
+      <h2 style="font-size:22px;font-weight:800;margin-bottom:8px">¡Entrenamiento completado!</h2>
+      <p style="color:var(--text2);font-size:15px;line-height:1.5;margin-bottom:20px">
+        Día ${state.currentDay + 1} · ${state.plan[state.currentDay].name}<br>
+        <strong style="color:var(--c2)">${state.plan[state.currentDay].calories} kcal quemadas aprox.</strong>
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:24px;font-weight:800">${Object.keys(state.completedDays).length}</div>
+          <div style="font-size:12px;color:var(--text2)">Días totales</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:24px;font-weight:800">${calcStreak()}</div>
+          <div style="font-size:12px;color:var(--text2)">Racha actual 🔥</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="closeModal();switchTab('home');updateHomeScreen();updateProgressScreen()">
+        ¡Volver al inicio!
+      </button>
+    </div>
+  `);
+
+  updateHomeScreen();
+  updateProgressScreen();
+}
+
+function calcStreak() {
+  return Math.min(Object.keys(state.completedDays).length, 7);
+}
+
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+function startRestTimer(seconds, exerciseName) {
+  stopTimer();
+  state.timerSeconds = seconds;
+  state.timerRunning = true;
+
+  document.getElementById('timer-label-text').textContent = `Descanso · ${exerciseName}`;
+  document.getElementById('timer-bar').classList.add('visible');
+  updateTimerDisplay();
+
+  state.timerInterval = setInterval(() => {
+    if (!state.timerRunning) return;
+    state.timerSeconds--;
+    updateTimerDisplay();
+    if (state.timerSeconds <= 0) {
+      stopTimer();
+      // Simple vibration feedback
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(state.timerSeconds / 60).toString().padStart(2, '0');
+  const s = (state.timerSeconds % 60).toString().padStart(2, '0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+}
+
+function toggleTimer() {
+  state.timerRunning = !state.timerRunning;
+  const btn = document.querySelector('.timer-controls .timer-btn');
+  btn.textContent = state.timerRunning ? '⏸ Pausa' : '▶ Continuar';
+}
+
+function stopTimer() {
+  clearInterval(state.timerInterval);
+  state.timerRunning = false;
+  document.getElementById('timer-bar').classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════
+// PROGRESS SCREEN
+// ═══════════════════════════════════════════
+function updateProgressScreen() {
+  const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const barsEl = document.getElementById('week-bars');
+  barsEl.innerHTML = '';
+
+  const today = new Date().getDay();
+  const todayIdx = today === 0 ? 6 : today - 1;
+
+  days.forEach((d, i) => {
+    const done = !!state.completedDays[i];
+    const isToday = i === todayIdx;
+    const height = done ? 80 : isToday ? 45 : 20;
+
+    const col = document.createElement('div');
+    col.className = 'week-bar-col';
+    col.innerHTML = `
+      <div class="week-bar${done ? ' done' : isToday ? ' today' : ''}" style="height:${height}px;transition:height 0.5s ${i * 0.08}s"></div>
+      <div class="week-day">${d}</div>
+    `;
+    barsEl.appendChild(col);
+  });
+
+  // Achievements
+  const total = Object.keys(state.completedDays).length;
+  const achs = [
+    { icon: '🔥', name: 'Primer paso', desc: 'Completa 1 entrenamiento', unlock: total >= 1 },
+    { icon: '⚡', name: 'En racha', desc: '3 días seguidos', unlock: total >= 3 },
+    { icon: '💎', name: 'Diamante', desc: '7 entrenamientos', unlock: total >= 7 },
+    { icon: '🏆', name: 'Campeón', desc: 'Semana completa', unlock: total >= 7 },
+    { icon: '🌟', name: 'Constante', desc: '5 entrenamientos', unlock: total >= 5 },
+    { icon: '🎯', name: 'Enfocado', desc: '14 entrenamientos', unlock: total >= 14 }
+  ];
+
+  const achEl = document.getElementById('achievements');
+  achEl.innerHTML = achs.map(a => `
+    <div class="achievement${a.unlock ? ' unlocked' : ''}">
+      <div class="ach-icon">${a.icon}</div>
+      <div class="ach-name">${a.name}</div>
+      <div class="ach-desc">${a.desc}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('prog-week-label').textContent = `Semana 1 · ${total} completados`;
+}
+
+// ═══════════════════════════════════════════
+// PROFILE SCREEN
+// ═══════════════════════════════════════════
+function updateProfileScreen() {
+  const u = state.user;
+  const bmi = (u.weight / Math.pow(u.height / 100, 2)).toFixed(1);
+  const initial = u.name.charAt(0).toUpperCase();
+
+  document.getElementById('profile-avatar').textContent = initial;
+  document.getElementById('profile-name').textContent = u.name;
+  document.getElementById('profile-goal-text').textContent = `Meta: ${GOALS[u.goal]?.label}`;
+  document.getElementById('pc-weight').textContent = u.weight + ' kg';
+  document.getElementById('pc-height').textContent = u.height + ' cm';
+  document.getElementById('pc-bmi').textContent = bmi;
+  document.getElementById('pc-level').textContent = LEVELS[u.level] || u.level;
+  document.getElementById('menu-goal-sub').textContent = GOALS[u.goal]?.label || '';
+}
+
+function showGoalInfo() {
+  const g = GOALS[state.user.goal];
+  showModal(`
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:12px">${g.emoji} ${g.label}</h2>
+    <p style="color:var(--text2);font-size:14px;line-height:1.6;margin-bottom:16px">${g.desc}</p>
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">📊 Tu IMC</div>
+      <div style="font-size:24px;font-weight:800">${(state.user.weight / Math.pow(state.user.height/100, 2)).toFixed(1)}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:4px">Peso: ${state.user.weight}kg · Talla: ${state.user.height}cm</div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+  `);
+}
+
+function showNutritionTip() {
+  const g = GOALS[state.user.goal];
+  showModal(`
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:12px">🥗 Nutrición para tu meta</h2>
+    <p style="font-size:15px;line-height:1.7;color:var(--text2);margin-bottom:20px">${g.nutrition}</p>
+    <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;color:#6ee7b7;line-height:1.6">💡 Consejo del día: Hidrátate bien. Bebe al menos 8 vasos de agua al día. La deshidratación reduce el rendimiento hasta un 20%.</div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+  `);
+}
+
+function resetApp() {
+  if (confirm('¿Quieres editar tu perfil? Tus datos de progreso se mantendrán.')) {
+    state.user = null;
+    state.plan = null;
+    localStorage.removeItem('fitcoach_state');
+    document.getElementById('navbar').style.display = 'none';
+    switchScreen('onboarding');
+  }
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.screen === tab);
+  });
+
+  if (tab !== 'workout') {
+    ['home', 'progress', 'profile'].forEach(s => {
+      const el = document.getElementById(`screen-${s}`);
+      el.classList.toggle('active', s === tab);
+    });
+    document.getElementById('screen-workout').classList.remove('active');
+  } else {
+    ['home', 'progress', 'profile'].forEach(s => document.getElementById(`screen-${s}`).classList.remove('active'));
+    document.getElementById('screen-workout').classList.add('active');
+  }
+
+  state.currentScreen = tab;
+}
+
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+}
+
+function goBack() {
+  if (state.bannerAnim) { state.bannerAnim(); state.bannerAnim = null; }
+  Object.keys(exAnimStates).forEach(k => { exAnimStates[k](); delete exAnimStates[k]; });
+  stopTimer();
+  switchTab('home');
+}
+
+// ═══════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════
+function showModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    if (loadState() && state.user) {
+      document.getElementById('navbar').style.display = 'flex';
+      initMainApp();
+    } else {
+      document.getElementById('loading').style.opacity = '0';
+      setTimeout(() => document.getElementById('loading').style.display = 'none', 400);
+      document.getElementById('screen-onboarding').classList.add('active');
+    }
+  }, 800);
+});
+
+// Register SW
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
