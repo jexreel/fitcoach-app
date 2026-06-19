@@ -9,6 +9,8 @@ jobs:
   build-apk:
     name: Build Android APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -33,40 +35,36 @@ jobs:
 
       - run: chmod +x android/gradlew
 
-      - name: Build APK (capture output)
+      - name: Build APK
         run: |
           cd android
           ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-out.txt || true
-          echo "EXIT: $?"
 
-      - name: Print Gradle output tail
+      - name: Push build log to repo (readable via API)
         if: always()
         run: |
-          echo "=== LAST 120 LINES OF GRADLE OUTPUT ==="
-          tail -120 /tmp/gradle-out.txt
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          cp /tmp/gradle-out.txt build-log.txt
+          git add build-log.txt
+          git commit -m "ci: add build log [skip ci]" || echo "nothing to commit"
+          git push
 
-      - name: Upload gradle log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-log
-          path: /tmp/gradle-out.txt
-          retention-days: 3
-
-      - name: Upload APK if exists
+      - name: Find and upload APK
         if: always()
         run: |
           APK=$(find android -name "*.apk" 2>/dev/null | head -1)
-          echo "APK found: $APK"
+          echo "APK: $APK"
           if [ -n "$APK" ]; then
-            mkdir -p /tmp/output
-            cp "$APK" /tmp/output/FitCoach.apk
+            mkdir -p /tmp/out
+            cp "$APK" /tmp/out/FitCoach.apk
+            echo "SIZE: $(du -h /tmp/out/FitCoach.apk)"
           fi
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: FitCoach-APK
-          path: /tmp/output/FitCoach.apk
+          path: /tmp/out/FitCoach.apk
           if-no-files-found: warn
           retention-days: 30
