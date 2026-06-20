@@ -40,8 +40,8 @@
   html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif; }
 
   /* ── SCREENS ─────────────────────────────────── */
-  .screen { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; transform: translateY(12px); }
-  .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+  .screen { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; transform: translateY(10px); background: var(--bg); visibility: hidden; z-index: 0; }
+  .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); visibility: visible; z-index: 1; }
 
   /* ── ONBOARDING ──────────────────────────────── */
   #screen-onboarding { background: linear-gradient(160deg, #0f172a 60%, #1e0f3c); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.5rem; gap: 2rem; }
@@ -1681,16 +1681,15 @@ function switchTab(tab) {
     el.classList.toggle('active', el.dataset.screen === tab);
   });
 
-  if (tab !== 'workout') {
-    ['home', 'progress', 'profile'].forEach(s => {
-      const el = document.getElementById(`screen-${s}`);
-      el.classList.toggle('active', s === tab);
-    });
-    document.getElementById('screen-workout').classList.remove('active');
-  } else {
-    ['home', 'progress', 'profile'].forEach(s => document.getElementById(`screen-${s}`).classList.remove('active'));
-    document.getElementById('screen-workout').classList.add('active');
-  }
+  const allScreens = ['home', 'progress', 'profile', 'workout'];
+
+  allScreens.forEach(s => {
+    const el = document.getElementById(`screen-${s}`);
+    const isActive = s === tab;
+    el.classList.toggle('active', isActive);
+    // Reset scroll position of screens going inactive
+    if (!isActive) el.scrollTop = 0;
+  });
 
   state.currentScreen = tab;
 }
