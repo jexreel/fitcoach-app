@@ -30,20 +30,23 @@ jobs:
 
       - name: Decode keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/fitcoach.keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > $GITHUB_WORKSPACE/android/app/fitcoach.keystore
+          echo "Keystore size: $(wc -c < $GITHUB_WORKSPACE/android/app/fitcoach.keystore) bytes"
+          ls -la $GITHUB_WORKSPACE/android/app/fitcoach.keystore
 
       - name: Build Release APK (signed)
         run: |
           cd android
-          ./gradlew assembleRelease --no-daemon             -Pandroid.injected.signing.store.file=fitcoach.keystore             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }}             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
-
-      - name: Rename APK
-        run: |
-          mv android/app/build/outputs/apk/release/app-release.apk              android/app/build/outputs/apk/release/FitCoach.apk
+          ./gradlew assembleRelease --no-daemon
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/android/app/fitcoach.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FitCoach-APK-Release
-          path: android/app/build/outputs/apk/release/FitCoach.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
